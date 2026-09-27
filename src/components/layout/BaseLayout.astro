@@ -1,0 +1,172 @@
+---
+/**
+ * BaseLayout — head/SEO, skip link, Header, slot, Footer, dialogs,
+ * shared vanilla JS: scroll-reveal observer + stat count-up.
+ */
+import type { Locale } from '../../config/site';
+import { site } from '../../config/site';
+import { localeHome } from '../../i18n/utils';
+import Header from './Header.astro';
+import Footer from './Footer.astro';
+import MobileMenu from './MobileMenu.astro';
+import SearchDialog, { type SearchItem } from './SearchDialog.astro';
+
+import '../../styles/tokens.css';
+import '../../styles/global.css';
+import '@fontsource/cormorant-garamond/400.css';
+import '@fontsource/cormorant-garamond/500.css';
+import '@fontsource/cormorant-garamond/400-italic.css';
+import '@fontsource/poppins/400.css';
+import '@fontsource/poppins/500.css';
+import '@fontsource/poppins/600.css';
+
+// Preload the two critical font weights (display 400 + body 400).
+import cormorant400Url from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-400-normal.woff2?url';
+import poppins400Url from '@fontsource/poppins/files/poppins-latin-400-normal.woff2?url';
+
+interface Props {
+  title: string;
+  description: string;
+  ogImage?: string;
+  locale: Locale;
+  currentPath: string;
+  searchIndex: SearchItem[];
+}
+
+const {
+  title,
+  description,
+  ogImage = '/og-image.jpg',
+  locale,
+  currentPath,
+  searchIndex,
+} = Astro.props;
+
+const canonical = new URL(currentPath, site.url).toString();
+const ogAbsolute = new URL(ogImage, site.url).toString();
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfessionalService',
+  name: `${site.name} ${site.subName}`,
+  url: site.url,
+  email: site.email,
+  telephone: site.phoneHref.replace('tel:', ''),
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: site.address.line1,
+    addressLocality: 'Copenhagen',
+    postalCode: '1264',
+    addressCountry: 'DK',
+  },
+  sameAs: site.socials.map((s) => s.href),
+};
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="en" href={localeHome('en')} />
+    <link rel="alternate" hreflang="fr" href={localeHome('fr')} />
+    <link rel="alternate" hreflang="x-default" href={localeHome('en')} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={`${site.name} ${site.subName}`} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogAbsolute} />
+    <meta property="og:locale" content={locale === 'fr' ? 'fr_FR' : 'en_US'} />
+    <meta property="og:locale:alternate" content={locale === 'fr' ? 'en_US' : 'fr_FR'} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogAbsolute} />
+
+    <meta name="theme-color" content="#F7F4EE" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <link
+      rel="preload"
+      href={cormorant400Url}
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="preload"
+      href={poppins400Url}
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+    />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+    <!-- Flag JS availability for progressive-enhancement CSS (reveal-on-scroll). -->
+    <script>document.documentElement.classList.add('js');</script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{locale === 'fr' ? 'Aller au contenu' : 'Skip to content'}</a>
+    <Header locale={locale} currentPath={currentPath} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer locale={locale} />
+    <MobileMenu locale={locale} currentPath={currentPath} />
+    <SearchDialog locale={locale} index={searchIndex} />
+
+    <script>
+      // Shared IntersectionObserver: scroll reveal (stagger via --reveal-i).
+      const revealObserver = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-visible');
+              revealObserver.unobserve(entry.target);
+            }
+          }
+        },
+        { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+      );
+      document.querySelectorAll('.reveal').forEach((el) => revealObserver.observe(el));
+
+      // Stat count-up on first view (real numbers already in HTML for no-JS).
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const animateCount = (el: HTMLElement) => {
+        const target = Number(el.dataset.count ?? '0');
+        const suffix = el.dataset.suffix ?? '';
+        if (reduceMotion || target <= 0) {
+          el.textContent = `${target}${suffix}`;
+          return;
+        }
+        const duration = 1400;
+        const start = performance.now();
+        const tick = (now: number) => {
+          const p = Math.min((now - start) / duration, 1);
+          const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+          el.textContent = `${Math.round(target * eased)}${suffix}`;
+          if (p < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      };
+      const countObserver = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              animateCount(entry.target as HTMLElement);
+              countObserver.unobserve(entry.target);
+            }
+          }
+        },
+        { threshold: 0.4 }
+      );
+      document.querySelectorAll('[data-count]').forEach((el) => countObserver.observe(el));
+    </script>
+  </body>
+</html>

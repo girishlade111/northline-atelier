@@ -1,0 +1,51 @@
+---
+/** 404 — styled in-theme, English (locale-neutral route). */
+import { useTranslations } from '../i18n/ui';
+import BaseLayout from '../components/layout/BaseLayout.astro';
+import Button from '../components/ui/Button.astro';
+import type { SearchItem } from '../components/layout/SearchDialog.astro';
+
+const locale = 'en' as const;
+const t = useTranslations(locale);
+
+const searchIndex: SearchItem[] = t.search.sectionLinks.map((s) => ({
+  title: s.title,
+  subtitle: t.menu.sections,
+  href: s.href,
+}));
+---
+
+<BaseLayout
+  title={`404 — ${t.notFound.title} | Northline Atelier`}
+  description={t.notFound.lead}
+  locale={locale}
+  currentPath="/404"
+  searchIndex={searchIndex}
+>
+  <section class="not-found">
+    <div class="wrap">
+      <p class="micro not-found-eyebrow">404</p>
+      <h1 class="not-found-h1">{t.notFound.title}</h1>
+      <p class="not-found-lead">{t.notFound.lead}</p>
+      <Button href="/">{t.notFound.back}</Button>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .not-found {
+    padding: clamp(90px, 12vw, 160px) 0;
+    text-align: center;
+  }
+  .not-found-eyebrow {
+    color: var(--ink-muted);
+    margin-bottom: 18px;
+  }
+  .not-found-h1 {
+    margin-bottom: 16px;
+  }
+  .not-found-lead {
+    color: var(--ink-muted);
+    margin-bottom: 36px;
+  }
+</style>

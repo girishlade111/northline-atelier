@@ -1,0 +1,63 @@
+---
+/** Footer bar — olive, 46px. Left: copyright. Right: Privacy / Terms. */
+import type { Locale } from '../../config/site';
+import { site } from '../../config/site';
+import { useTranslations } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p class="copy">© {year} {site.name} {site.subName}. {t.footer.rights}</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--olive);
+    color: var(--on-olive);
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+  }
+  .footer-inner {
+    width: min(var(--content-max), 100%);
+    margin-inline: auto;
+    padding: 12px var(--gutter);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .site-footer nav {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .site-footer nav a {
+    padding: 6px 0;
+    opacity: 0.92;
+  }
+  .site-footer nav a:hover {
+    opacity: 1;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .sep {
+    width: 1px;
+    height: 12px;
+    background: currentColor;
+    opacity: 0.4;
+  }
+</style>

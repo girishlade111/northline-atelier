@@ -1,0 +1,102 @@
+---
+/**
+ * Services — 4-column grid of service offerings with thin-line icons.
+ */
+import type { Locale } from '../../config/site';
+import { useTranslations } from '../../i18n/ui';
+import Eyebrow from '../ui/Eyebrow.astro';
+import ArrowLink from '../ui/ArrowLink.astro';
+import Reveal from '../ui/Reveal.astro';
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+const icons = ['arch', 'pendant', 'plan', 'furniture'] as const;
+
+---
+
+<section class="services section-pad hairline-bottom" id="services" aria-label={t.services.eyebrow}>
+  <div class="services-inner">
+    <Reveal class="services-eyebrow">
+      <Eyebrow text={t.services.eyebrow} trail />
+    </Reveal>
+
+    <div class="services-grid">
+      {t.services.items.map((item, i) => (
+        <Reveal as="article" i={i} class="service">
+          <Icon name={icons[i]} size={40} class="service-icon" />
+          <h3 class="service-title">{item.title}</h3>
+          <p class="service-desc">{item.desc}</p>
+          <ArrowLink href="#services" class="service-link">{t.services.learnMore}</ArrowLink>
+        </Reveal>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .services-inner {
+    width: min(1100px, 100%);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+  :global(.services-eyebrow) {
+    margin-bottom: 54px;
+  }
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 40px;
+  }
+  :global(.service) {
+    display: flex;
+    flex-direction: column;
+  }
+  :global(.service-icon) {
+    color: var(--ink);
+    margin-bottom: 22px;
+    transition: transform 0.35s var(--ease-out);
+  }
+  :global(.service):hover :global(.service-icon) {
+    transform: translateY(-3px);
+  }
+  .service-title {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--olive);
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+  .service-desc {
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--ink-muted);
+    margin-bottom: 20px;
+    flex: 1;
+  }
+  :global(.service-link) {
+    color: var(--olive);
+  }
+
+  @media (max-width: 1023px) {
+    .services-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 44px 40px;
+    }
+  }
+  @media (max-width: 767px) {
+    .services-grid {
+      grid-template-columns: 1fr;
+    }
+    :global(.services-eyebrow) {
+      margin-bottom: 40px;
+    }
+  }
+</style>

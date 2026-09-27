@@ -1,0 +1,17 @@
+---
+/**
+ * Reveal — scroll-triggered fade-up wrapper.
+ * Observed by the shared IntersectionObserver injected in BaseLayout.
+ * `i` = 0-based stagger index within its siblings (90ms steps).
+ */
+interface Props {
+  as?: 'div' | 'section' | 'article' | 'li' | 'span';
+  i?: number;
+  class?: string;
+}
+const { as: Tag = 'div', i = 0, class: cls = '' } = Astro.props;
+---
+
+<Tag class:list={['reveal', cls]} style={`--reveal-i:${i}`}>
+  <slot />
+</Tag>

@@ -1,0 +1,491 @@
+---
+/**
+ * Contact — 3 columns split by vertical hairlines (29% / 43% / 28%):
+ * headline · inquiry form · paper-grain info panel.
+ */
+import type { Locale } from '../../config/site';
+import { site } from '../../config/site';
+import { useTranslations } from '../../i18n/ui';
+import Reveal from '../ui/Reveal.astro';
+import Button from '../ui/Button.astro';
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const f = t.contact.form;
+
+const fieldIds = { name: 'cf-name', email: 'cf-email', type: 'cf-type', message: 'cf-message' };
+---
+
+<section class="contact" id="contact" aria-label={t.contact.title.join(' ')}>
+  <div class="contact-grid">
+    <!-- Col 1: headline -->
+    <div class="col col-1">
+      <Reveal>
+        <h2 class="contact-h2">
+          {t.contact.title.map((line) => (
+            <span class="h2-line">{line}</span>
+          ))}
+        </h2>
+      </Reveal>
+      <Reveal i={1}><span class="short-rule" aria-hidden="true"></span></Reveal>
+      <Reveal i={2}><p class="contact-lead">{t.contact.lead}</p></Reveal>
+    </div>
+
+    <!-- Col 2: form -->
+    <div class="col col-2">
+      <Reveal>
+        <form class="inquiry" id="inquiry-form" novalidate>
+          <div class="field">
+            <label for={fieldIds.name}>{f.name}</label>
+            <input id={fieldIds.name} name="name" type="text" autocomplete="name"
+              placeholder={f.namePlaceholder} required aria-describedby={`${fieldIds.name}-err`} />
+            <p class="field-error" id={`${fieldIds.name}-err`} hidden></p>
+          </div>
+
+          <div class="field">
+            <label for={fieldIds.email}>{f.email}</label>
+            <input id={fieldIds.email} name="email" type="email" autocomplete="email"
+              placeholder={f.emailPlaceholder} required aria-describedby={`${fieldIds.email}-err`} />
+            <p class="field-error" id={`${fieldIds.email}-err`} hidden></p>
+          </div>
+
+          <div class="field field-select">
+            <label for={fieldIds.type}>{f.type}</label>
+            <div class="select-wrap">
+              <select id={fieldIds.type} name="project_type">
+                {f.typeOptions.map((opt) => (
+                  <option value={opt}>{opt}</option>
+                ))}
+              </select>
+              <Icon name="chevron" size={16} class="select-chevron" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for={fieldIds.message}>{f.message}</label>
+            <textarea id={fieldIds.message} name="message" rows="3"
+              placeholder={f.messagePlaceholder} required aria-describedby={`${fieldIds.message}-err`}></textarea>
+            <p class="field-error" id={`${fieldIds.message}-err`} hidden></p>
+          </div>
+
+          <!-- Honeypot: real users never fill this -->
+          <div class="honeypot" aria-hidden="true">
+            <label for="cf-company">{f.honeypot}</label>
+            <input id="cf-company" name="company" type="text" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <Button type="submit" class="submit-btn">{f.submit}</Button>
+
+          <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+        </form>
+      </Reveal>
+    </div>
+
+    <!-- Col 3: info panel -->
+    <div class="col col-3">
+      <Reveal class="panel-inner">
+        <div class="panel-mark">
+          <Icon name="mark" size={56} class="mark-icon" />
+          <p class="panel-wordmark">{site.name}<span>{site.subName}</span></p>
+        </div>
+        <ul class="contact-list">
+          <li>
+            <Icon name="pin" size={14} />
+            <span>{t.contact.address.line1}<br />{t.contact.address.line2}</span>
+          </li>
+          <li>
+            <Icon name="mail" size={14} />
+            <a href={`mailto:${site.email}`}>{site.email}</a>
+          </li>
+          <li>
+            <Icon name="phone" size={14} />
+            <a href={site.phoneHref}>{site.phone}</a>
+          </li>
+        </ul>
+        <p class="panel-socials" aria-label={t.contact.socialsLabel}>
+          {site.socials.map((s, idx) => (
+            <>
+              {idx > 0 && <span class="bar" aria-hidden="true"></span>}
+              <a href={s.href} rel="noopener noreferrer">{s.label}</a>
+            </>
+          ))}
+        </p>
+      </Reveal>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Inquiry form: JSON POST to PUBLIC_FORM_ENDPOINT (Web3Forms/Formspree-compatible),
+  // honeypot, inline errors, aria-live status. Falls back to mailto:.
+  const STR = JSON.parse(document.getElementById('inquiry-strings')?.textContent ?? '{}');
+  const ENDPOINT = (document.getElementById('inquiry-endpoint')?.textContent ?? '').trim();
+  const SITE_EMAIL = (document.getElementById('inquiry-site-email')?.textContent ?? '').trim();
+
+  const form = document.getElementById('inquiry-form') as HTMLFormElement | null;
+  const submitBtn = form?.querySelector('button[type="submit"]') as HTMLButtonElement | null;
+  const status = document.getElementById('form-status') as HTMLParagraphElement | null;
+  const label = submitBtn?.querySelector('.btn-label') as HTMLElement | null;
+  const defaultLabel = label?.textContent ?? '';
+
+  const fields = [
+    { id: 'cf-name', key: 'name' },
+    { id: 'cf-email', key: 'email' },
+    { id: 'cf-message', key: 'message' },
+  ] as const;
+
+  function setError(id: string, message: string | null) {
+    const err = document.getElementById(`${id}-err`);
+    const input = document.getElementById(id);
+    if (!err) return;
+    if (message) {
+      err.textContent = message;
+      err.hidden = false;
+      input?.setAttribute('aria-invalid', 'true');
+    } else {
+      err.textContent = '';
+      err.hidden = true;
+      input?.removeAttribute('aria-invalid');
+    }
+  }
+
+  function validate(): boolean {
+    let ok = true;
+    const data = new FormData(form!);
+    const name = String(data.get('name') ?? '').trim();
+    const email = String(data.get('email') ?? '').trim();
+    const message = String(data.get('message') ?? '').trim();
+
+    if (!name) { setError('cf-name', STR.validation.name); ok = false; }
+    else setError('cf-name', null);
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('cf-email', STR.validation.email); ok = false; }
+    else setError('cf-email', null);
+
+    if (!message) { setError('cf-message', STR.validation.message); ok = false; }
+    else setError('cf-message', null);
+
+    return ok;
+  }
+
+  function setStatus(message: string, isError: boolean) {
+    if (!status) return;
+    status.textContent = message;
+    status.classList.toggle('is-error', isError);
+  }
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!form || !submitBtn) return;
+    setStatus('', false);
+    if (!validate()) return;
+
+    // Honeypot: pretend success, send nothing.
+    const bot = (form.querySelector('#cf-company') as HTMLInputElement | null)?.value;
+    if (bot) {
+      setStatus(STR.success, false);
+      form.reset();
+      return;
+    }
+
+    const data = new FormData(form);
+    const payload = {
+      name: String(data.get('name') ?? ''),
+      email: String(data.get('email') ?? ''),
+      project_type: String(data.get('project_type') ?? ''),
+      message: String(data.get('message') ?? ''),
+    };
+
+    if (!ENDPOINT) {
+      // No endpoint configured: fall back to the user's email app.
+      setStatus(STR.noEndpoint, false);
+      const subject = encodeURIComponent(`Project inquiry — ${payload.name}`);
+      const body = encodeURIComponent(
+        `Name: ${payload.name}\nEmail: ${payload.email}\nProject type: ${payload.project_type}\n\n${payload.message}`
+      );
+      window.location.href = `mailto:${SITE_EMAIL}?subject=${subject}&body=${body}`;
+      return;
+    }
+
+    submitBtn.disabled = true;
+    if (label) label.textContent = STR.sending;
+    try {
+      const res = await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setStatus(STR.success, false);
+      form.reset();
+    } catch {
+      setStatus(STR.error, true);
+    } finally {
+      submitBtn.disabled = false;
+      if (label) label.textContent = defaultLabel;
+    }
+  });
+
+  // Clear a field's error as the user types.
+  fields.forEach(({ id }) => {
+    document.getElementById(id)?.addEventListener('input', () => setError(id, null));
+  });
+</script>
+
+<script id="inquiry-strings" type="application/json" set:html={JSON.stringify({
+  sending: f.sending,
+  success: f.success,
+  error: f.error,
+  noEndpoint: f.noEndpoint,
+  validation: f.validation,
+})} />
+<script id="inquiry-endpoint" type="text/plain" set:html={import.meta.env.PUBLIC_FORM_ENDPOINT ?? ''} />
+<script id="inquiry-site-email" type="text/plain" set:html={site.email} />
+
+<style>
+  .contact {
+    border-top: 1px solid var(--line);
+  }
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 29% 43% 28%;
+    min-height: 415px;
+    width: min(var(--content-max), 100%);
+    margin-inline: auto;
+  }
+  .col {
+    padding: clamp(36px, 3.4vw, 52px) clamp(24px, 2.6vw, 44px);
+  }
+  .col-2,
+  .col-3 {
+    border-left: 1px solid var(--line);
+  }
+
+  /* --- Col 1 --- */
+  .contact-h2 {
+    font-size: clamp(34px, 3.4vw, 44px);
+    line-height: 1.12;
+    margin-bottom: 22px;
+  }
+  .h2-line {
+    display: block;
+  }
+  .short-rule {
+    display: block;
+    width: 20px;
+    height: 1px;
+    background: var(--ink);
+    margin-bottom: 18px;
+  }
+  .contact-lead {
+    font-size: 13px;
+    color: var(--ink-muted);
+    max-width: 280px;
+  }
+
+  /* --- Col 2: form --- */
+  .inquiry {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 460px;
+  }
+  .field label {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 6px;
+  }
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 8px 2px 10px;
+    font-size: 14px;
+    border-radius: 0;
+    transition: border-color 0.25s var(--ease-out);
+  }
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    outline: none;
+    border-bottom-color: var(--olive);
+  }
+  .field input[aria-invalid='true'],
+  .field textarea[aria-invalid='true'] {
+    border-bottom-color: #a33b2e;
+  }
+  .field textarea {
+    resize: vertical;
+    min-height: 72px;
+  }
+  .field ::placeholder {
+    color: var(--ink-muted);
+    opacity: 0.6;
+  }
+  .select-wrap {
+    position: relative;
+  }
+  .select-wrap select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 28px;
+    cursor: pointer;
+  }
+  :global(.select-chevron) {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--ink-muted);
+  }
+  .field-error {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #a33b2e;
+  }
+  .honeypot {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  :global(.submit-btn) {
+    width: 196px;
+    min-height: 58px;
+    margin-top: 6px;
+    align-self: flex-start;
+  }
+  .form-status {
+    font-size: 13px;
+    color: var(--olive);
+    min-height: 1.4em;
+  }
+  .form-status.is-error {
+    color: #a33b2e;
+  }
+
+  /* --- Col 3: info panel --- */
+  .col-3 {
+    position: relative;
+    background: var(--bg-paper);
+    overflow: clip;
+  }
+  .col-3::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.06;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-size: 240px 240px;
+  }
+  :global(.panel-inner) {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-mark {
+    margin-bottom: 26px;
+  }
+  :global(.mark-icon) {
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .panel-wordmark {
+    font-family: var(--font-display);
+    font-size: 18px;
+    letter-spacing: 0.24em;
+    line-height: 1.5;
+  }
+  .panel-wordmark span {
+    display: block;
+    font-size: 9px;
+    font-family: var(--font-body);
+    font-weight: 500;
+    letter-spacing: 0.4em;
+  }
+  .contact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-size: 13px;
+    margin-bottom: auto;
+  }
+  .contact-list li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    color: var(--ink-muted);
+  }
+  .contact-list svg {
+    flex: none;
+    margin-top: 3px;
+    color: var(--ink);
+  }
+  .contact-list a {
+    color: var(--ink);
+  }
+  .contact-list a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .panel-socials {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 30px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .panel-socials a:hover {
+    color: var(--olive);
+  }
+  .panel-socials .bar {
+    width: 1px;
+    height: 12px;
+    background: var(--line);
+  }
+
+  /* --- Responsive: stack columns below 1024px --- */
+  @media (max-width: 1023px) {
+    .contact-grid {
+      grid-template-columns: 1fr;
+      min-height: 0;
+    }
+    .col-2,
+    .col-3 {
+      border-left: 0;
+      border-top: 1px solid var(--line);
+    }
+    .inquiry {
+      max-width: 560px;
+    }
+    .contact-list {
+      margin-bottom: 0;
+    }
+  }
+
+  @media (max-width: 767px) {
+    :global(.submit-btn) {
+      width: 100%;
+      max-width: 340px;
+    }
+  }
+
+</style>

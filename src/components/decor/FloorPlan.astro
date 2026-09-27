@@ -1,0 +1,59 @@
+---
+/**
+ * FloorPlan — faint architectural line-art for the studio side panel.
+ * Walls with door gaps, door swing arcs, dimension lines, tree circles.
+ * stroke var(--line) at ~40% opacity. Pure decor.
+ */
+---
+
+<svg
+  class="floorplan"
+  viewBox="0 0 420 560"
+  fill="none"
+  stroke="var(--line)"
+  stroke-width="1"
+  opacity="0.4"
+  aria-hidden="true"
+  focusable="false"
+>
+  <!-- outer walls -->
+  <path d="M60 80h300M60 80v400M360 80v400M60 480h300" />
+  <!-- interior walls -->
+  <path d="M60 240h140M200 240v240M200 340h160" />
+  <!-- door gaps + swing arcs -->
+  <path d="M150 240v-40" stroke-dasharray="0" />
+  <path d="M150 240a40 40 0 0 1 40-40" />
+  <path d="M200 400v40" />
+  <path d="M200 400a40 40 0 0 0 40 40" />
+  <!-- windows -->
+  <path d="M240 80h80" stroke-width="2.5" />
+  <path d="M140 480h80" stroke-width="2.5" />
+  <!-- dimension lines -->
+  <path d="M60 40h300M60 34v12M360 34v12" />
+  <path d="M400 80v400M394 80h12M394 480h12" />
+  <text x="210" y="30" text-anchor="middle" font-size="11" fill="var(--line)" stroke="none" opacity="0.8">12.40</text>
+  <text x="412" y="290" text-anchor="middle" font-size="11" fill="var(--line)" stroke="none" opacity="0.8" transform="rotate(90 412 290)">9.60</text>
+  <!-- trees -->
+  <circle cx="300" cy="160" r="26" />
+  <circle cx="300" cy="160" r="14" />
+  <circle cx="120" cy="400" r="20" />
+  <circle cx="120" cy="400" r="10" />
+  <!-- furniture hints -->
+  <rect x="230" y="370" width="90" height="40" />
+  <rect x="90" y="110" width="70" height="34" />
+  <!-- north arrow -->
+  <circle cx="70" cy="520" r="14" />
+  <path d="M70 530v-20M64 518l6-6 6 6" />
+</svg>
+
+<style>
+  .floorplan {
+    pointer-events: none;
+    width: 100%;
+    height: auto;
+  }
+  .floorplan text {
+    font-family: var(--font-body);
+    letter-spacing: 0.08em;
+  }
+</style>

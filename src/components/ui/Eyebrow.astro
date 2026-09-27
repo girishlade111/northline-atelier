@@ -1,0 +1,50 @@
+---
+/** Eyebrow: 28px 1px line + small uppercase label. `trail` puts the line after the text. */
+interface Props {
+  text: string;
+  trail?: boolean;
+  class?: string;
+}
+const { text, trail = false, class: cls = '' } = Astro.props;
+---
+
+<span class:list={['eyebrow-line', cls, { trail }]}>
+  {!trail && <span class="rule" aria-hidden="true"></span>}
+  <span class="label">{text}</span>
+  {trail && <span class="rule" aria-hidden="true"></span>}
+</span>
+
+<style>
+  .eyebrow-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--ink-muted);
+  }
+  .eyebrow-line .label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .eyebrow-line .rule {
+    width: 28px;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.7;
+  }
+
+  @media (max-width: 480px) {
+    .eyebrow-line {
+      gap: 10px;
+    }
+    .eyebrow-line .label {
+      font-size: 9.5px;
+      letter-spacing: 0.12em;
+      white-space: nowrap;
+    }
+    .eyebrow-line .rule {
+      width: 22px;
+    }
+  }
+</style>

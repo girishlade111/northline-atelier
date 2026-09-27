@@ -1,0 +1,208 @@
+---
+/**
+ * Header — sticky, 88px, cream bg, 1px bottom hairline.
+ * Left logo · center nav · right lang switch / divider / search / hamburger.
+ * Center nav hides <1024px (moves into menu dialog).
+ */
+import type { Locale } from '../../config/site';
+import { site } from '../../config/site';
+import { navLabels } from '../../i18n/utils';
+import { useTranslations } from '../../i18n/ui';
+import Logo from './Logo.astro';
+import LanguageSwitcher from './LanguageSwitcher.astro';
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  locale: Locale;
+  currentPath: string;
+}
+const { locale, currentPath } = Astro.props;
+const t = useTranslations(locale);
+const homePath = locale === 'fr' ? '/fr/' : '/';
+
+function navHref(href: string): string {
+  if (href.startsWith('#')) return href;
+  return locale === 'fr' ? `/fr${href}` : href;
+}
+---
+
+<header class="site-header" id="site-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <Logo href={homePath} />
+    </div>
+
+    <nav class="header-nav" aria-label="Primary">
+      <ul>
+        {site.nav.map((item) => (
+          <li>
+            <a href={navHref(item.href)}>{navLabels[item.label][locale]}</a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="header-right">
+      <LanguageSwitcher locale={locale} currentPath={currentPath} />
+      <span class="v-divider" aria-hidden="true"></span>
+      <button
+        type="button"
+        class="icon-btn"
+        id="search-open"
+        aria-label={t.header.search}
+        aria-haspopup="dialog"
+      >
+        <Icon name="search" size={21} />
+      </button>
+      <button
+        type="button"
+        class="icon-btn"
+        id="menu-open"
+        aria-label={t.header.menu}
+        aria-haspopup="dialog"
+        aria-controls="menu-dialog"
+        aria-expanded="false"
+      >
+        <Icon name="menu" size={22} />
+      </button>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Sticky header: subtle blur + shadow after 8px scroll.
+  const header = document.getElementById('site-header');
+  const onScroll = () => {
+    header?.classList.toggle('is-scrolled', window.scrollY > 8);
+  };
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // Wire trigger buttons to their dialogs (dialogs live in BaseLayout).
+  const menuBtn = document.getElementById('menu-open') as HTMLButtonElement | null;
+  const searchBtn = document.getElementById('search-open') as HTMLButtonElement | null;
+  const menuDialog = document.getElementById('menu-dialog') as HTMLDialogElement | null;
+  const searchDialog = document.getElementById('search-dialog') as HTMLDialogElement | null;
+
+  menuBtn?.addEventListener('click', () => {
+    if (!menuDialog) return;
+    menuBtn.setAttribute('aria-expanded', 'true');
+    menuDialog.showModal();
+  });
+  menuDialog?.addEventListener('close', () => {
+    menuBtn?.setAttribute('aria-expanded', 'false');
+    menuBtn?.focus();
+  });
+
+  searchBtn?.addEventListener('click', () => {
+    if (!searchDialog) return;
+    searchDialog.showModal();
+  });
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: var(--header-h);
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    transition:
+      box-shadow 0.3s var(--ease-out),
+      background-color 0.3s var(--ease-out);
+  }
+  .site-header.is-scrolled {
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 28px rgba(27, 26, 23, 0.08);
+  }
+  .header-inner {
+    height: 100%;
+    width: min(var(--content-max), 100%);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+  }
+  .header-left {
+    justify-self: start;
+  }
+  .header-nav ul {
+    display: flex;
+    gap: 56px;
+  }
+  .header-nav a {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 8px 0;
+    position: relative;
+  }
+  .header-nav a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 2px;
+    width: 100%;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.35s var(--ease-out);
+  }
+  .header-nav a:hover::after,
+  .header-nav a:focus-visible::after {
+    transform: scaleX(1);
+  }
+  .header-right {
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .v-divider {
+    width: 1px;
+    height: 28px;
+    background: var(--line);
+  }
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    color: var(--ink);
+    transition: color 0.25s var(--ease-out);
+  }
+  .icon-btn:hover {
+    color: var(--olive);
+  }
+  @media (max-width: 1023px) {
+    .header-nav {
+      display: none;
+    }
+    .header-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header-right {
+      justify-self: end;
+    }
+  }
+  @media (max-width: 767px) {
+    .header-right :global(.lang) {
+      display: none; /* language switch lives inside the menu on mobile */
+    }
+    .header-right .v-divider {
+      display: none;
+    }
+    .header-right {
+      gap: 12px;
+    }
+  }
+</style>

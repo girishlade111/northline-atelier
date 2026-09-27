@@ -1,0 +1,164 @@
+---
+/**
+ * Hero — two-column: text left (starts ~7.7vw), full-bleed image right (60%)
+ * with a diagonal left edge. Topo contour decor bottom-left behind text.
+ */
+import type { Locale } from '../../config/site';
+import { useTranslations } from '../../i18n/ui';
+import { Picture } from 'astro:assets';
+import heroImg from '../../assets/images/hero-courtyard-house.jpg';
+import Eyebrow from '../ui/Eyebrow.astro';
+import Button from '../ui/Button.astro';
+import TopoLines from '../decor/TopoLines.astro';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const accent = t.hero.accentIndex;
+---
+
+<section class="hero hairline-bottom" aria-label={t.hero.eyebrow}>
+  <div class="hero-media">
+    <Picture
+      src={heroImg}
+      formats={['avif', 'webp', 'jpg']}
+      widths={[900, 1400, 2000, 2400]}
+      sizes="(max-width: 1023px) 100vw, 60vw"
+      width={2400}
+      height={2000}
+      alt={t.hero.alt}
+      loading="eager"
+      fetchpriority="high"
+      class="hero-img"
+    />
+  </div>
+
+  <TopoLines />
+
+  <div class="hero-text">
+    <div class="hero-anim" style="--hero-i:0">
+      <Eyebrow text={t.hero.eyebrow} />
+    </div>
+    <h1 class="hero-anim hero-h1" style="--hero-i:1">
+      {t.hero.titleLines.map((line, i) => (
+        <span class="h1-line">
+          {i === accent ? <em class="accent">{line}</em> : line}
+        </span>
+      ))}
+    </h1>
+    <p class="hero-anim hero-lead" style="--hero-i:2">{t.hero.lead}</p>
+    <div class="hero-anim" style="--hero-i:3">
+      <Button href="#projects" class="hero-cta">{t.hero.cta}</Button>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: clamp(560px, 50vw, 760px);
+    display: flex;
+    align-items: center;
+    overflow: clip;
+  }
+
+  .hero-media {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 60%;
+    clip-path: polygon(39% 0, 100% 0, 100% 100%, 0 100%);
+  }
+  .hero-media :global(.hero-img),
+  .hero-media :global(picture) {
+    width: 100%;
+    height: 100%;
+  }
+  .hero-media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero :global(.topo) {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: min(620px, 46%);
+    height: auto;
+    z-index: 1;
+  }
+
+  .hero-text {
+    position: relative;
+    z-index: 2;
+    padding-left: clamp(20px, 7.7vw, 140px);
+    padding-right: var(--gutter);
+    padding-block: 64px;
+    max-width: 46%;
+  }
+
+  .hero-h1 {
+    margin: 26px 0 22px;
+  }
+  .h1-line {
+    display: block;
+  }
+  .h1-line .accent {
+    font-style: italic;
+    color: var(--sage);
+    font-weight: 400;
+  }
+
+  .hero-lead {
+    max-width: 330px;
+    font-size: 14px;
+    color: var(--ink-muted);
+    margin-bottom: 34px;
+  }
+
+  /* class is forwarded to the Button component root (no parent cid),
+     so the selector must be global to match */
+  :global(.hero-cta) {
+    width: 262px;
+    min-height: 59px;
+  }
+
+  @media (max-width: 1023px) {
+    .hero {
+      flex-direction: column;
+      align-items: stretch;
+      min-height: 0;
+    }
+    .hero-text {
+      max-width: none;
+      padding: 72px var(--gutter) 56px;
+    }
+    .hero-media {
+      position: relative;
+      width: 100%;
+      height: clamp(320px, 60vw, 520px);
+      clip-path: none;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .hero-text {
+      padding-top: 56px;
+    }
+    .hero-lead {
+      max-width: 100%;
+    }
+    .hero-cta {
+      width: 100%;
+      max-width: 340px;
+    }
+    .hero :global(.topo) {
+      width: 78%;
+      opacity: 0.5;
+    }
+  }
+</style>

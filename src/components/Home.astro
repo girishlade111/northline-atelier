@@ -1,0 +1,59 @@
+---
+/**
+ * Home — the single composition rendered by both / and /fr/ pages.
+ * `locale` switches every string; markup is shared.
+ */
+import type { Locale } from '../config/site';
+import { getCollection } from 'astro:content';
+import { useTranslations } from '../i18n/ui';
+import BaseLayout from './layout/BaseLayout.astro';
+import Hero from './sections/Hero.astro';
+import FeaturedProjects from './sections/FeaturedProjects.astro';
+import Studio from './sections/Studio.astro';
+import Stats from './sections/Stats.astro';
+import Services from './sections/Services.astro';
+import Contact from './sections/Contact.astro';
+import type { SearchItem } from './layout/SearchDialog.astro';
+
+interface Props {
+  locale: Locale;
+  currentPath: string;
+}
+const { locale, currentPath } = Astro.props;
+const t = useTranslations(locale);
+
+const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+
+const searchIndex: SearchItem[] = [
+  ...projects.map((p) => ({
+    title: p.data.title,
+    subtitle: `${t.projects.category[p.data.category]} — ${p.data.location[locale]}`,
+    href: `#project-${p.id.replace(/\.md$/, '')}`,
+  })),
+  ...t.services.items.map((s) => ({
+    title: s.title,
+    subtitle: t.services.eyebrow,
+    href: '#services',
+  })),
+  ...t.search.sectionLinks.map((s) => ({
+    title: s.title,
+    subtitle: t.menu.sections,
+    href: s.href,
+  })),
+];
+---
+
+<BaseLayout
+  title={t.meta.title}
+  description={t.meta.description}
+  locale={locale}
+  currentPath={currentPath}
+  searchIndex={searchIndex}
+>
+  <Hero locale={locale} />
+  <FeaturedProjects locale={locale} />
+  <Studio locale={locale} />
+  <Stats locale={locale} />
+  <Services locale={locale} />
+  <Contact locale={locale} />
+</BaseLayout>

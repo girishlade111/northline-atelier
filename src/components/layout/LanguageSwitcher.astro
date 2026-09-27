@@ -1,0 +1,62 @@
+---
+/**
+ * LanguageSwitcher — EN | FR. Active = ink, inactive = olive.
+ * Links to the equivalent path in the other locale.
+ */
+import type { Locale } from '../../config/site';
+import { getLocalizedPath } from '../../i18n/utils';
+import { useTranslations } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+  currentPath: string;
+  compact?: boolean;
+}
+const { locale, currentPath, compact = false } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<nav class:list={['lang', { compact }]} aria-label={t.header.language}>
+  <a
+    href={getLocalizedPath(currentPath, 'en')}
+    aria-current={locale === 'en' ? 'true' : undefined}
+    aria-label={locale === 'en' ? 'English (current)' : 'English'}
+    class:list={[{ active: locale === 'en' }]}
+    lang="en"
+  >EN</a>
+  <span class="divider" aria-hidden="true"></span>
+  <a
+    href={getLocalizedPath(currentPath, 'fr')}
+    aria-current={locale === 'fr' ? 'true' : undefined}
+    aria-label={locale === 'fr' ? 'Français (actuel)' : 'Français'}
+    class:list={[{ active: locale === 'fr' }]}
+    lang="fr"
+  >FR</a>
+</nav>
+
+<style>
+  .lang {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+  }
+  .lang a {
+    color: var(--olive);
+    padding: 6px 2px;
+    transition: color 0.25s var(--ease-out);
+  }
+  .lang a:hover {
+    color: var(--ink);
+  }
+  .lang a.active {
+    color: var(--ink);
+  }
+  .lang .divider {
+    width: 1px;
+    height: 14px;
+    background: var(--line);
+  }
+</style>

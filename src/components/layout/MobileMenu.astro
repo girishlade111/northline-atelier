@@ -1,0 +1,167 @@
+---
+/**
+ * MobileMenu — full-screen native <dialog>.
+ * Big serif nav links, address/email/socials at bottom, language switch, close button.
+ * Esc + backdrop click close; native focus trap; return focus to trigger.
+ */
+import type { Locale } from '../../config/site';
+import { site } from '../../config/site';
+import { navLabels } from '../../i18n/utils';
+import { useTranslations } from '../../i18n/ui';
+import LanguageSwitcher from './LanguageSwitcher.astro';
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  locale: Locale;
+  currentPath: string;
+}
+const { locale, currentPath } = Astro.props;
+const t = useTranslations(locale);
+
+function navHref(href: string): string {
+  if (href.startsWith('#')) return href;
+  return locale === 'fr' ? `/fr${href}` : href;
+}
+---
+
+<dialog class="menu-dialog" id="menu-dialog" aria-label={t.header.menu}>
+  <div class="menu-inner">
+    <div class="menu-top">
+      <LanguageSwitcher locale={locale} currentPath={currentPath} />
+      <button
+        type="button"
+        class="icon-btn"
+        data-close
+        aria-label={t.header.close}
+      >
+        <Icon name="close" size={24} />
+      </button>
+    </div>
+
+    <nav aria-label="Menu">
+      <ul class="menu-links">
+        {site.nav.map((item) => (
+          <li>
+            <a href={item.href.startsWith('#') ? item.href : navHref(item.href)}>
+              {navLabels[item.label][locale]}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="menu-foot">
+      <p class="micro-label">{t.menu.contact}</p>
+      <p>{site.address.line1}<br />{site.address.line2}</p>
+      <p><a href={`mailto:${site.email}`}>{site.email}</a></p>
+      <p class="socials">
+        {site.socials.map((s, idx) => (
+          <>
+            {idx > 0 && <span class="bar" aria-hidden="true"></span>}
+            <a href={s.href} rel="noopener noreferrer">{s.label}</a>
+          </>
+        ))}
+      </p>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  const dialog = document.getElementById('menu-dialog') as HTMLDialogElement | null;
+  const closeBtn = dialog?.querySelector('[data-close]');
+
+  // Backdrop click closes (click on the dialog element itself, not its children).
+  dialog?.addEventListener('click', (e) => {
+    if (e.target === dialog) dialog.close();
+  });
+  closeBtn?.addEventListener('click', () => dialog?.close());
+
+  // Anchor links inside the menu should close it before navigating.
+  dialog?.querySelectorAll('a[href^="#"]').forEach((a) => {
+    a.addEventListener('click', () => dialog.close());
+  });
+</script>
+
+<style>
+  .menu-dialog {
+    padding: 0;
+    border: 0;
+    background: var(--bg);
+    color: var(--ink);
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+  }
+  .menu-dialog::backdrop {
+    background: rgba(27, 26, 23, 0.35);
+  }
+  .menu-inner {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(20px, 4vw, 46px);
+  }
+  .menu-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .menu-links {
+    margin: auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 2.5vh, 22px);
+  }
+  .menu-links a {
+    font-family: var(--font-display);
+    font-size: clamp(38px, 8vw, 64px);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    transition: color 0.25s var(--ease-out);
+  }
+  .menu-links a:hover {
+    color: var(--olive);
+  }
+  .menu-foot {
+    border-top: 1px solid var(--line);
+    padding-top: 22px;
+    display: grid;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+  .micro-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .menu-foot a:hover {
+    color: var(--ink);
+  }
+  .socials {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 6px;
+    text-transform: uppercase;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+  }
+  .socials .bar {
+    width: 1px;
+    height: 12px;
+    background: var(--line);
+  }
+</style>

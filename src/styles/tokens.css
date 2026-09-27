@@ -1,0 +1,41 @@
+/* Northline Atelier — design tokens. Single source of truth for colour, type, space. */
+
+:root {
+  /* Surfaces */
+  --bg: #f7f4ee;
+  --bg-alt: #efebe2;
+  --bg-paper: #ece8de;
+
+  /* Ink */
+  --ink: #1b1a17;
+  --ink-muted: #5f5c54;
+
+  /* Hairlines */
+  --line: #d8d3c7;
+
+  /* Brand accents */
+  --olive: #5b5b3c;
+  --olive-dark: #4a4a2f;
+  --sage: #8a956a;
+  --on-olive: #f3efe6;
+
+  /* Decor strokes */
+  --topo: #b9b4a6;
+
+  /* Type */
+  --font-display: "Cormorant Garamond", "Georgia", "Times New Roman", serif;
+  --font-body: "Poppins", -apple-system, "Segoe UI", sans-serif;
+
+  --h1-size: clamp(48px, 6vw, 88px);
+  --h2-size: clamp(30px, 2.6vw, 40px);
+  --stat-size: clamp(44px, 4.2vw, 60px);
+
+  /* Layout */
+  --gutter: clamp(20px, 3.2vw, 46px);
+  --content-max: 1680px;
+  --header-h: 88px;
+  --header-scroll-pad: 96px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
