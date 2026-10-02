@@ -182,3 +182,9 @@ All rights reserved — client project. The dev source-viewer plugin
 (`code-viewer.plugin.mjs`) is a standalone reusable snippet: copy it
 into any Astro project and register it in `astro.config.mjs` to get the
 same `/__src` viewer.
+
+---
+
+## Credits
+
+Built by [Girish Lade](https://github.com/girishlade111) — [ladestack.in](https://ladestack.in)
